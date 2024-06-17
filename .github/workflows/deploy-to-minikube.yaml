@@ -26,8 +26,8 @@ jobs:
         run: |
           export SHELL=/bin/bash
           eval $(minikube -p minikube docker-env)
-          docker build -f ./Dockerfile -t java-backend:v405 .
-          docker build -f ../my-react-map-doc/Dockerfile -t doc-react:v405 ../my-react-map-doc
+          docker build -f ./my-spring-boot-app/Dockerfile -t java-backend:v405 ./my-spring-boot-app
+          docker build -f ./my-react-map-doc/Dockerfile -t doc-react:v405 ./my-react-map-doc
           echo -n "Verifying images: "
           docker images
 
