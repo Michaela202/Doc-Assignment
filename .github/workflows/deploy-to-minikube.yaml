@@ -54,7 +54,7 @@ jobs:
         run: kubectl wait --for=condition=Ready pod -l io.kompose.service=db --timeout=120s
 
       - name: Wait for web to be ready
-        run: kubectl wait --for=condition=Ready pod -l io.kompose.service=web --timeout=120s
+        run: kubectl wait --for=condition=Ready pod -l io.kompose.service=frontend --timeout=120s
 
       - name: Check all resources
         run: kubectl get all
