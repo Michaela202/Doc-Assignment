@@ -19,7 +19,7 @@ jobs:
       - name: Run Tests
         run: | 
           sleep 10
-          mvn -B ./my-spring-boot-app/test
+          mvn -B -f ./my-spring-boot-app/pom.xml test
 
   build:
     needs: tests
