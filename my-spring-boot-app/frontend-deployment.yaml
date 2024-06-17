@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - image: react:v405
-          imagePulPolicy: Never
+          imagePullPolicy: Never
           name: frontend
           ports:
             - containerPort: 3000
