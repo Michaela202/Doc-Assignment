@@ -1,0 +1,79 @@
+name: CD - Deploy to Minikube using Github Actions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  job1:
+    name: Build and Deploy to Minikube
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Minikube
+        id: minikube
+        uses: medyagh/setup-minikube@latest
+
+      - name: Try the cluster
+        run: kubectl get pods -A
+
+      - name: Build Image
+        run: |
+          export SHELL=/bin/bash
+          eval $(minikube -p minikube docker-env)
+          docker build -f ./Dockerfile -t java-backend:v405 .
+          docker build -f ../my-react-map-doc/Dockerfile -t doc-react:v405 ../my-react-map-doc
+          echo -n "Verifying images: "
+          docker images
+
+      - name: Deploy backend
+        run: |
+          kubectl apply -f backend-deployment.yaml
+          kubectl apply -f backend-service.yaml
+
+      - name: Deploy database
+        run: |
+          kubectl apply -f db-persistentvolumeclaim.yaml
+          kubectl apply -f db-deployment.yaml
+          kubectl apply -f db-service.yaml
+
+      - name: Deploy web
+        run: |
+          kubectl apply -f frontend-deployment.yaml
+          kubectl apply -f frontend-service.yaml
+
+      - name: Wait for backend to be ready
+        run: kubectl wait --for=condition=Ready pod -l io.kompose.service=backend --timeout=120s
+
+      - name: Wait for database to be ready
+        run: kubectl wait --for=condition=Ready pod -l io.kompose.service=db --timeout=120s
+
+      - name: Wait for web to be ready
+        run: kubectl wait --for=condition=Ready pod -l io.kompose.service=web --timeout=120s
+
+      - name: Check all resources
+        run: kubectl get all
+
+      - name: Port forwarding
+        run: |
+          echo "Forwarding ports..."
+          kubectl port-forward service/backend 8080:8080 &> /dev/null &
+          sleep 5
+          kubectl port-forward service/web 3000:3000 &> /dev/null &
+          sleep 5
+
+      - name: Test web service
+        run: curl -i http://localhost:3000/
+
+      - name: Test backend service
+        run: curl -i http://localhost:8080/
+
+      - name: Cleanup
+        run: |
+          eval $(minikube docker-env -u)
+          minikube delete
